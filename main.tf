@@ -15,6 +15,9 @@ module "guardduty" {
 #   source = "./modules/lambda"
 # }
 
-# module "notifications" {
-#   source = "./modules/notifications"
-# }
+module "notifications" {
+  source             = "./modules/notifications"
+  project_name       = var.project_name
+  alert_email        = var.alert_email
+  log_retention_days = var.log_retention_days
+}
