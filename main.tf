@@ -11,9 +11,13 @@ module "guardduty" {
 #   source = "./modules/eventbridge"
 # }
 
-# module "lambda" {
-#   source = "./modules/lambda"
-# }
+module "lambda" {
+  source                    = "./modules/lambda"
+  project_name              = var.project_name
+  sns_topic_arn             = module.notifications.sns_topic_arn
+  cloudwatch_log_group_name = module.notifications.cloudwatch_log_group_name
+  guardduty_detector_id     = module.guardduty.detector_id
+}
 
 module "notifications" {
   source             = "./modules/notifications"
