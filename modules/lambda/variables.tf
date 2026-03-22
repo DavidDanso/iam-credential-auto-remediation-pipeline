@@ -1,29 +1,31 @@
 variable "project_name" {
-  description = "Project name"
+  description = "Prefix used for naming all resources"
   type        = string
 }
 
 variable "sns_topic_arn" {
-  description = "SNS topic ARN"
+  description = "ARN of the SNS topic for alert notifications"
   type        = string
 }
 
 variable "cloudwatch_log_group_name" {
-  description = "CloudWatch log group name"
+  description = "Name of the CloudWatch log group for the Lambda function"
   type        = string
 }
 
 variable "guardduty_detector_id" {
-  description = "GuardDuty detector ID"
+  description = "GuardDuty detector ID used in IAM policy scoping"
   type        = string
 }
 
 variable "lambda_timeout" {
-  description = "Lambda timeout in seconds"
+  description = "Lambda function timeout in seconds"
   type        = number
+  default     = 30
 }
 
 variable "lambda_memory" {
-  description = "Lambda memory in MB"
+  description = "Lambda function memory allocation in MB"
   type        = number
+  default     = 128
 }

@@ -12,3 +12,8 @@ output "lambda_function_arn" {
   description = "Lambda function ARN"
   value       = module.lambda.lambda_function_arn
 }
+
+output "lambda_function_name" {
+  description = "The name of the Lambda remediation function"
+  value       = module.lambda.lambda_function_name
+}

@@ -19,6 +19,8 @@ module "lambda" {
   guardduty_detector_id     = module.guardduty.detector_id
   lambda_timeout            = var.lambda_timeout
   lambda_memory             = var.lambda_memory
+
+  depends_on = [module.notifications]
 }
 
 module "notifications" {

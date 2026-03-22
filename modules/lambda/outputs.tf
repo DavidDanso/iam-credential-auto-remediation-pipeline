@@ -14,6 +14,6 @@ output "lambda_function_arn" {
 }
 
 output "lambda_function_name" {
-  description = "Lambda function name"
+  description = "The name of the Lambda remediation function"
   value       = aws_lambda_function.remediate.function_name
 }
