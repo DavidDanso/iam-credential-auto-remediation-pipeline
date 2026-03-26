@@ -101,7 +101,64 @@ threat-detection-pipeline/
 
 ## Testing
 
-**Generate a sample GuardDuty finding:**
+### Full End-to-End Test (Recommended)
+
+This test validates the complete remediation path against a real IAM identity — access key deactivation, login profile deletion, SNS alert delivery, and CloudWatch logging.
+
+**1. Get your AWS account ID:**
+```bash
+aws sts get-caller-identity --query Account --output text
+```
+
+**2. Create a throwaway test user with a real access key and login profile:**
+```bash
+aws iam create-user --user-name compromised-test-user
+aws iam create-access-key --user-name compromised-test-user
+aws iam create-login-profile --user-name compromised-test-user --password 'TempPass123!@#' --password-reset-required
+```
+
+Save the `AccessKeyId` returned from the second command.
+
+**3. Invoke the Lambda directly with a crafted payload:**
+```bash
+aws lambda invoke \
+  --function-name $(terraform output -raw lambda_function_name) \
+  --payload '{"version":"0","id":"test-001","detail-type":"GuardDuty Finding","source":"aws.guardduty","detail":{"schemaVersion":"2.0","accountId":"<your_account_id>","region":"<your_region>","type":"CredentialAccess:IAMUser/AnomalousBehavior","severity":8,"createdAt":"2026-01-01T00:00:00Z","id":"test-finding-001","resource":{"resourceType":"AccessKey","accessKeyDetails":{"userType":"IAMUser","userName":"compromised-test-user","accessKeyId":"<AccessKeyId>","userAccount":"<your_account_id>"}}}}' \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
+```
+
+Replace `<your_account_id>`, `<your_region>`, and `<AccessKeyId>` with real values.
+
+Expected response:
+```json
+{"statusCode": 200, "body": "Remediation complete. Status: SUCCESS"}
+```
+
+**4. Verify the remediation happened in AWS:**
+```bash
+# Access key must show Status: Inactive
+aws iam list-access-keys --user-name compromised-test-user
+
+# Login profile must return NoSuchEntity (Lambda deleted it)
+aws iam get-login-profile --user-name compromised-test-user
+```
+
+**5. Check your email inbox** — confirm the structured JSON alert arrived with `remediation_status: SUCCESS` and `affected_principal.username: compromised-test-user`.
+
+**6. Clean up the test user (in this exact order):**
+```bash
+aws iam delete-access-key --user-name compromised-test-user --access-key-id <AccessKeyId>
+aws iam delete-user --user-name compromised-test-user
+```
+
+> Login profile was already deleted by Lambda — skip that step.
+
+---
+
+### EventBridge Routing Verification
+
+This test confirms EventBridge is correctly wired to Lambda. It uses a fabricated GuardDuty identity so IAM remediation will fail — that is expected. The only thing being verified here is that the routing works.
 
 ```bash
 aws guardduty create-sample-findings \
@@ -109,11 +166,17 @@ aws guardduty create-sample-findings \
   --finding-types 'CredentialAccess:IAMUser/AnomalousBehavior'
 ```
 
-**Verify the pipeline:**
+Wait 2 minutes, then check CloudWatch Logs for a Lambda invocation triggered by EventBridge.
+
+---
+
+### Verify the Pipeline
+
+After running either test:
 
 - **CloudWatch Logs** — check `/aws/lambda/<project_name>-remediate` for Lambda invocation logs
 - **Email** — confirm a structured JSON alert arrived in your inbox
-- **Security Hub** — navigate to Findings and confirm GuardDuty findings are visible
+- **Security Hub** — navigate to Security Hub CSPM → Findings and confirm GuardDuty findings are visible
 
 ## Cost Note
 
