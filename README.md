@@ -1,4 +1,4 @@
-# Threat Detection & Auto-Remediation Pipeline
+# IAM Credential Auto-Remediation Pipeline
 
 An automated AWS security pipeline that detects threats via Amazon GuardDuty, remediates compromised IAM identities in real time using AWS Lambda, sends structured alerts via Amazon SNS, and aggregates findings in AWS Security Hub — all provisioned and managed through Terraform.
 
